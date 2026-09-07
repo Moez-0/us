@@ -199,7 +199,7 @@ declare
 begin
   foreach table_name in array array[
     'partner_statuses', 'love_events', 'letters', 'memories',
-    'bucket_items', 'question_answers', 'little_moments'
+    'bucket_items', 'question_answers', 'songs', 'little_moments'
   ] loop
     if not exists (
       select 1

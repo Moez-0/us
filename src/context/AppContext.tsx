@@ -431,6 +431,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bucket_items' }, (payload) => {
         setBucketItems((prev) => prev.map((b) => (b.id === payload.new.id ? (payload.new as BucketItem) : b)));
       })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'songs' }, (payload) => {
+        const newSong = payload.new as Song;
+        setSongs((prev) => {
+          if (prev.some((song) => song.id === newSong.id)) return prev;
+          const next = [newSong, ...prev];
+          saveLocal(STORAGE_KEYS.SONGS, next);
+          return next;
+        });
+      })
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.warn(`Supabase Realtime subscription ${status.toLowerCase()}`);
@@ -451,7 +460,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) return;
 
-      const [statusResult, letterResult, memoryResult, answerResult, bucketResult, countdownResult] =
+      const [statusResult, letterResult, memoryResult, answerResult, bucketResult, countdownResult, songResult] =
         await Promise.all([
           supabase.from('partner_statuses').select('*').eq('couple_id', INITIAL_COUPLE.id),
           supabase
@@ -479,6 +488,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             .eq('couple_id', INITIAL_COUPLE.id)
             .order('created_at', { ascending: false })
             .limit(1),
+          supabase
+            .from('songs')
+            .select('*')
+            .eq('couple_id', INITIAL_COUPLE.id)
+            .order('created_at', { ascending: false }),
         ]);
 
       if (!active) return;
@@ -524,6 +538,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (countdownResult.data?.[0]) {
         setCountdown(countdownResult.data[0] as Countdown);
         saveLocal(STORAGE_KEYS.COUNTDOWN, countdownResult.data[0]);
+      }
+
+      if (songResult.error) console.warn('Could not load songs:', songResult.error);
+      if (songResult.data) {
+        setSongs(songResult.data as Song[]);
+        saveLocal(STORAGE_KEYS.SONGS, songResult.data);
       }
     };
 
@@ -1041,6 +1061,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     addMoment(`added "${title}" by ${artist} to Our Soundtrack`, 'song');
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase.from('songs').insert({
+          id: newSong.id,
+          couple_id: newSong.couple_id,
+          added_by: newSong.added_by,
+          adder_name: newSong.adder_name,
+          title: newSong.title,
+          artist: newSong.artist,
+          url: newSong.url,
+          note: newSong.note,
+        });
+        if (error) console.warn('Song sync error:', error);
+      } catch (error) {
+        console.warn('Song sync error:', error);
+      }
+    }
   }, [currentUser, addMoment]);
 
   // Story Milestones
