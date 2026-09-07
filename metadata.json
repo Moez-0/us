@@ -1,0 +1,5 @@
+{
+  "name": "Us.",
+  "description": "A private, mobile-first space made specifically for Moez and Eliza.",
+  "requestFramePermissions": ["geolocation"]
+}
