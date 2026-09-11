@@ -182,7 +182,7 @@ export interface LittleMoment {
 
 export interface PushSubscriptionRecord {
   id?: string;
-  user_id: string;
+  user_name: PartnerName;
   couple_id: string;
   endpoint: string;
   p256dh: string;

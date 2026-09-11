@@ -148,6 +148,16 @@ create table if not exists public.little_moments (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.push_subscriptions (
+  id text primary key default gen_random_uuid()::text,
+  couple_id text not null references public.couples(id) on delete cascade,
+  user_name text not null check (user_name in ('Moez', 'Eliza')),
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+
 -- -----------------------------------------------------------------------------
 -- Indexes
 -- -----------------------------------------------------------------------------
@@ -169,7 +179,7 @@ begin
   foreach table_name in array array[
     'couples', 'members', 'partner_statuses', 'love_events', 'letters',
     'memories', 'memory_reactions', 'countdowns', 'bucket_items', 'questions',
-    'question_answers', 'songs', 'story_milestones', 'little_moments'
+    'question_answers', 'songs', 'story_milestones', 'little_moments', 'push_subscriptions'
   ] loop
     execute format('alter table public.%I enable row level security', table_name);
     execute format('drop policy if exists "authenticated_select" on public.%I', table_name);
@@ -199,7 +209,7 @@ declare
 begin
   foreach table_name in array array[
     'partner_statuses', 'love_events', 'letters', 'memories',
-    'bucket_items', 'question_answers', 'songs', 'little_moments'
+    'bucket_items', 'question_answers', 'songs', 'little_moments', 'push_subscriptions'
   ] loop
     if not exists (
       select 1

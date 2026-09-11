@@ -13,14 +13,21 @@ interface PushPayload {
   tag?: string;
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const jsonHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+};
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      },
+      headers: corsHeaders,
     });
   }
 
@@ -40,31 +47,17 @@ serve(async (req: Request) => {
 
     const { couple_id, recipient_name, title, body, url, tag }: PushPayload = await req.json();
 
-    // Query recipient member user_id
-    const { data: member, error: memberErr } = await supabaseClient
-      .from("members")
-      .select("user_id")
-      .eq("couple_id", couple_id)
-      .eq("name", recipient_name)
-      .single();
-
-    if (memberErr || !member) {
-      return new Response(JSON.stringify({ error: "Recipient not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
     // Retrieve active push subscriptions for that user
     const { data: subscriptions, error: subErr } = await supabaseClient
       .from("push_subscriptions")
       .select("endpoint, p256dh, auth")
-      .eq("user_id", member.user_id);
+      .eq("couple_id", couple_id)
+      .eq("user_name", recipient_name);
 
     if (subErr || !subscriptions || subscriptions.length === 0) {
       return new Response(JSON.stringify({ message: "No active push subscriptions registered" }), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: jsonHeaders,
       });
     }
 
@@ -94,12 +87,12 @@ serve(async (req: Request) => {
 
     return new Response(JSON.stringify({ success: true, count: subscriptions.length }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 });

@@ -155,6 +155,35 @@ async function showRealtimeNotification(title: string, body: string, tag: string
   }
 }
 
+function decodeVapidKey(value: string) {
+  const padding = '='.repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((character) => character.charCodeAt(0)));
+}
+
+async function sendPushNotification(
+  recipientName: PartnerName,
+  title: string,
+  body: string,
+  tag: string,
+) {
+  if (!supabase || !isSupabaseConfigured) return;
+
+  const { error } = await supabase.functions.invoke('send-push', {
+    body: {
+      couple_id: INITIAL_COUPLE.id,
+      recipient_name: recipientName,
+      title,
+      body,
+      tag,
+      url: '/',
+    },
+  });
+
+  if (error) console.warn('Push notification delivery error:', error.message);
+}
+
 function getLoveNotification(type: LoveEventType, sender: PartnerName) {
   const messages: Record<LoveEventType, string> = {
     thinking: 'is thinking of you',
@@ -187,9 +216,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [pushSubscribed, setPushSubscribed] = useState(() =>
-    typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
-  );
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser || !('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.ready
+      .then((registration) => registration.pushManager.getSubscription())
+      .then((subscription) => setPushSubscribed(Boolean(subscription)))
+      .catch(() => setPushSubscribed(false));
+  }, [currentUser]);
 
   // App Domain Data States
   const [statuses, setStatuses] = useState<Record<string, UserStatus>>(() =>
@@ -757,16 +793,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     broadcast('LOVE_ACTION', payload);
     addMoment(labels[type], type === 'hug' ? 'hug' : 'love_action');
 
-    // Realtime database changes deliver the notification directly to connected devices.
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('love_events').insert({
+        const { error } = await supabase.from('love_events').insert({
           id: payload.id,
           couple_id: INITIAL_COUPLE.id,
           sender_id: currentUser === 'Moez' ? 'user-moez' : 'user-eliza',
           sender_name: currentUser,
           type,
         });
+        if (error) throw error;
+
+        const notification = getLoveNotification(type, currentUser);
+        await sendPushNotification(partnerName, notification.title, notification.body, `love-event-${payload.id}`);
       } catch (e) {
         console.warn('Love action realtime sync error:', e);
       }
@@ -803,7 +842,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from('letters').insert(newLetter);
+        const { error } = await supabase.from('letters').insert(newLetter);
+        if (error) throw error;
+
+        await sendPushNotification(
+          partnerName,
+          `${currentUser} wrote you a letter`,
+          title,
+          `letter-${newLetter.id}`,
+        );
       } catch (e) {
         console.warn('Letter write error:', e);
       }
@@ -1064,6 +1111,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (isSupabaseConfigured && supabase) {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          const { error: authError } = await supabase.auth.signInAnonymously();
+          if (authError) throw authError;
+        }
+
         const { error } = await supabase.from('songs').insert({
           id: newSong.id,
           couple_id: newSong.couple_id,
@@ -1074,10 +1127,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           url: newSong.url,
           note: newSong.note,
         });
-        if (error) console.warn('Song sync error:', error);
+        if (error) {
+          console.error('Song sync error:', error);
+          window.alert(`Could not save this song online: ${error.message}`);
+        }
       } catch (error) {
-        console.warn('Song sync error:', error);
+        console.error('Song sync error:', error);
+        window.alert('Could not save this song online. Check the connection and try again.');
       }
+    } else {
+      window.alert('Supabase is not configured in this deployment. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Netlify.');
     }
   }, [currentUser, addMoment]);
 
@@ -1099,19 +1158,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, [storyMilestones.length]);
 
-  // Browser notifications for Supabase Realtime events; no push server is required.
   const enablePushNotifications = useCallback(async () => {
-    if (!('Notification' in window)) {
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !vapidPublicKey) {
       return false;
     }
 
     try {
       const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        setPushSubscribed(true);
-        return true;
-      }
-      return false;
+      if (permission !== 'granted') return false;
+
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: decodeVapidKey(vapidPublicKey),
+      });
+      const json = subscription.toJSON();
+      const keys = json.keys;
+
+      if (!supabase || !keys?.p256dh || !keys.auth || !currentUser) return false;
+
+      const { error } = await supabase.from('push_subscriptions').upsert(
+        {
+          couple_id: INITIAL_COUPLE.id,
+          user_name: currentUser,
+          endpoint: subscription.endpoint,
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+        },
+        { onConflict: 'endpoint' },
+      );
+
+      if (error) throw error;
+      setPushSubscribed(true);
+      return true;
     } catch (e) {
       console.warn('Notification permission error:', e);
       return false;
