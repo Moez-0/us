@@ -1161,6 +1161,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const enablePushNotifications = useCallback(async () => {
     const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !vapidPublicKey) {
+      window.alert('Push notifications are not configured in this deployment. Add VITE_VAPID_PUBLIC_KEY in Netlify and redeploy.');
       return false;
     }
 
@@ -1176,7 +1177,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const json = subscription.toJSON();
       const keys = json.keys;
 
-      if (!supabase || !keys?.p256dh || !keys.auth || !currentUser) return false;
+      if (!supabase || !keys?.p256dh || !keys.auth || !currentUser) {
+        throw new Error('The Supabase session or push subscription keys are unavailable.');
+      }
 
       const { error } = await supabase.from('push_subscriptions').upsert(
         {
@@ -1194,6 +1197,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return true;
     } catch (e) {
       console.warn('Notification permission error:', e);
+      window.alert(`Could not enable push notifications: ${e instanceof Error ? e.message : 'Unknown error'}`);
       return false;
     }
   }, [currentUser]);
