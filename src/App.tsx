@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppProvider, useApp } from './context/AppContext';
 import { OnboardingAuth } from './components/OnboardingAuth';
@@ -29,6 +29,11 @@ const MainLayout: React.FC = () => {
   } = useApp();
 
   const { isInstalled } = usePWAInstall();
+
+  useEffect(() => {
+    if (!currentUser || pushSubscribed || !('Notification' in window)) return;
+    if (Notification.permission === 'default') setShowInstallGuide(true);
+  }, [currentUser, pushSubscribed, setShowInstallGuide]);
 
   // If no persona selected yet, show frictionless first-launch selection
   if (!currentUser) {

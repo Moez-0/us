@@ -1166,19 +1166,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     try {
-      const permission = await Notification.requestPermission();
+      let permission = Notification.permission;
+      if (permission === 'default') {
+        permission = await Notification.requestPermission();
+      }
       if (permission !== 'granted') return false;
 
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: decodeVapidKey(vapidPublicKey),
-      });
+      const subscription = await registration.pushManager.getSubscription() ||
+        await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: decodeVapidKey(vapidPublicKey),
+        });
       const json = subscription.toJSON();
       const keys = json.keys;
 
       if (!supabase || !keys?.p256dh || !keys.auth || !currentUser) {
         throw new Error('The Supabase session or push subscription keys are unavailable.');
+      }
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!sessionData.session) {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) throw error;
       }
 
       const { error } = await supabase.from('push_subscriptions').upsert(
@@ -1201,6 +1212,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
   }, [currentUser]);
+
+  // A previously granted browser permission still needs to be linked to the
+  // selected partner after a reload or when the browser restores the worker.
+  useEffect(() => {
+    if (!currentUser || !('Notification' in window) || Notification.permission !== 'granted') return;
+    enablePushNotifications().catch(() => {});
+  }, [currentUser, enablePushNotifications]);
 
   const value = useMemo<AppContextValue>(
     () => ({
