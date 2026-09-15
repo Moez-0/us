@@ -89,8 +89,8 @@ export const VirtualHugButton: React.FC<VirtualHugButtonProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center select-none w-full">
-      {/* Square Pixel Charge Button */}
-      <div className="relative">
+      {/* Central hold interaction */}
+      <div className="relative hug-orbit">
         <button
           id="hug-action-button"
           onTouchStart={handleStart}
@@ -98,12 +98,12 @@ export const VirtualHugButton: React.FC<VirtualHugButtonProps> = ({
           onMouseDown={handleStart}
           onMouseUp={handleEnd}
           onMouseLeave={handleEnd}
-          className={`w-36 h-36 border-4 border-black flex flex-col items-center justify-center cursor-pointer transition-transform ${
+          className={`hug-button w-44 h-44 border flex flex-col items-center justify-center cursor-pointer transition-transform ${
             isSent
-              ? 'bg-[#06D6A0] text-black shadow-[2px_2px_0px_#000] translate-x-1 translate-y-1'
+              ? 'bg-[#37dcc4] text-[#07131d] shadow-lg translate-y-0.5'
               : isPressing
-              ? 'bg-[#FF3366] text-white shadow-[1px_1px_0px_#000] translate-x-1 translate-y-1'
-              : 'bg-white dark:bg-[#1A1A2E] text-black dark:text-white shadow-[6px_6px_0px_#000] hover:-translate-y-0.5'
+              ? 'bg-[#ff3d83] text-white shadow-lg translate-y-0.5'
+              : 'bg-[#10142c] text-white shadow-[0_0_28px_rgba(255,61,131,0.18)] hover:-translate-y-0.5'
           }`}
         >
           {isSent ? (
@@ -113,8 +113,8 @@ export const VirtualHugButton: React.FC<VirtualHugButtonProps> = ({
               className="flex flex-col items-center"
             >
               <Check className="w-10 h-10 text-black stroke-[3]" />
-              <span className="font-pixel text-xs text-black mt-1">HUG SENT!</span>
-              <span className="font-pixel-ui text-[10px] text-black font-bold">WITH LOVE</span>
+              <span className="font-pixel text-xs text-[#07131d] mt-1">HUG SENT!</span>
+              <span className="font-pixel-ui text-[10px] text-[#07131d] font-bold">WITH LOVE</span>
             </motion.div>
           ) : (
             <div className="flex flex-col items-center pointer-events-none">
@@ -125,10 +125,10 @@ export const VirtualHugButton: React.FC<VirtualHugButtonProps> = ({
                     : 'text-[#FF3366] fill-[#FF3366]'
                 }`}
               />
-              <span className="font-pixel text-xs mt-2">
+              <span className="font-pixel text-xs mt-2 tracking-[0.14em]">
                 {isPressing ? 'SENDING...' : 'HOLD TO HUG'}
               </span>
-              <span className="font-pixel-ui text-[10px] text-[#777] dark:text-[#AAA]">
+              <span className="script-place text-[10px] text-white/55">
                 {isPressing ? `${Math.round(progress * 100)}%` : `For ${partnerName}`}
               </span>
             </div>
@@ -136,9 +136,9 @@ export const VirtualHugButton: React.FC<VirtualHugButtonProps> = ({
         </button>
       </div>
 
-      {/* 8-Bit Pixel Charging Bar Gauge */}
-      <div className="mt-3 w-48 border-2 border-black bg-black p-0.5 shadow-[2px_2px_0px_#000]">
-        <div className="flex gap-0.5 h-3">
+      {/* Charging bar */}
+      <div className="hug-progress mt-5 w-52 p-1">
+        <div className="flex gap-1 h-2">
           {Array.from({ length: totalBlocks }).map((_, i) => (
             <div
               key={i}
@@ -147,14 +147,14 @@ export const VirtualHugButton: React.FC<VirtualHugButtonProps> = ({
                   ? isSent
                     ? 'bg-[#06D6A0]'
                     : 'bg-[#FF3366]'
-                  : 'bg-[#333]'
+                  : 'bg-white/10'
               }`}
             />
           ))}
         </div>
       </div>
 
-      <div className="font-pixel text-[10px] text-black dark:text-[#AAA] mt-2 text-center uppercase">
+      <div className="font-pixel text-[10px] text-white/50 mt-3 text-center uppercase tracking-[0.12em]">
         {isSent
           ? `★ Warm Hug Received by ${partnerName}! ★`
           : `[ HOLD BUTTON 1.5S TO CHARGE VIRTUAL HUG ]`}

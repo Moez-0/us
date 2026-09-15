@@ -46,7 +46,7 @@ const MainLayout: React.FC = () => {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#0D0F18] text-[#121526] dark:text-[#F5F4F0] font-sans antialiased transition-colors selection:bg-[#E06D53]/20">
+    <div className="app-shell min-h-screen text-[#F7F5FF] font-sans antialiased transition-colors selection:bg-[#FF3D83]/20">
       <OfflineIndicator />
 
       {/* Realtime Incoming Love Event Banner & Ripple */}

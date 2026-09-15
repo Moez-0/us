@@ -82,16 +82,16 @@ export const HomeView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-28 pt-3 px-3 sm:px-4 max-w-md mx-auto space-y-4 select-none">
+    <div className="home-shell min-h-screen pb-32 pt-5 px-4 sm:px-5 max-w-md mx-auto space-y-4 select-none">
       {/* Top Header */}
-      <div className="flex items-center justify-between border-b-2 border-black pb-2">
-        <div className="flex items-center gap-2">
-          <div className="bg-[#FF3366] text-white border-2 border-black font-pixel text-xs px-2 py-0.5 shadow-[1px_1px_0px_#000]">
-            US.
+      <div className="home-header flex items-center justify-between pb-4">
+        <div className="flex items-center gap-3">
+          <div className="brand-mark text-white font-pixel text-lg">
+            US.<span className="brand-heart">♥</span>
           </div>
-          <span className="font-pixel text-xs text-black dark:text-white tracking-wider">
-            MOEZ & ELIZA
-          </span>
+          <div>
+            <span className="block font-pixel text-xs text-white tracking-[0.16em] mt-1">MOEZ & ELIZA</span>
+          </div>
         </div>
 
         {/* User's quick mood indicator & trigger */}
@@ -100,7 +100,7 @@ export const HomeView: React.FC = () => {
             pixelAudio.playBlip();
             setShowStatusPicker(true);
           }}
-          className="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-[#1A1A2E] border-2 border-black text-black dark:text-white font-pixel text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-0.5 cursor-pointer"
+          className="status-pill flex items-center gap-1.5 px-3 py-2 text-white/85 font-pixel text-[10px] cursor-pointer"
         >
           <span className="w-2 h-2 bg-[#06D6A0] inline-block border border-black animate-pulse" />
           <span className="truncate max-w-[90px]">{myStatus?.status || 'SET STATUS'}</span>
@@ -109,11 +109,11 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* Shared Locations & Distance */}
-      <div className="pixel-card bg-white dark:bg-[#1A1A2E] p-3 relative">
-        <div className="flex items-center justify-between pb-2 mb-2 border-b-2 border-black">
+      <div className="pixel-card location-panel p-4 relative">
+        <div className="flex items-center justify-between pb-3 mb-3 location-heading">
           <div className="flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5 text-[#FF3366] animate-pulse" />
-            <span className="font-pixel text-[11px] text-black dark:text-white uppercase tracking-wider">
+            <Radio className="w-4 h-4 text-[#ff4d91] animate-pulse" />
+            <span className="font-pixel text-[11px] text-white/80 uppercase tracking-[0.16em]">
               OUR LOCATIONS
             </span>
           </div>
@@ -121,7 +121,7 @@ export const HomeView: React.FC = () => {
           <button
             onClick={handleRefreshGPS}
             disabled={isGpsLoading}
-            className="font-pixel text-[9px] bg-[#FFD166] text-black px-2 py-0.5 border border-black shadow-[1px_1px_0px_#000] flex items-center gap-1 cursor-pointer hover:translate-x-0.5 disabled:opacity-50"
+            className="ghost-action font-pixel text-[9px] text-[#ff77aa] px-3 py-2 flex items-center gap-1 cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-2.5 h-2.5 ${isGpsLoading ? 'animate-spin' : ''}`} />
             <span>{isGpsLoading ? 'UPDATING...' : 'UPDATE LOCATION'}</span>
@@ -131,29 +131,29 @@ export const HomeView: React.FC = () => {
         {/* Our two locations */}
         <div className="grid grid-cols-2 gap-2 font-pixel-ui text-xs">
           {/* Player 1 (Moez) */}
-          <div className="border border-black bg-[#FAF8F5] dark:bg-[#121224] p-2">
+          <div className="location-card location-card-blue p-3">
             <div className="flex items-center justify-between pb-1 border-b border-black/10 dark:border-white/10 mb-1">
-              <span className="font-pixel text-[10px] text-[#118AB2]">MOEZ</span>
-              <span className="font-pixel text-[9px] text-[#777]">{moezTime}</span>
+              <span className="font-pixel text-[10px] text-[#62aaff]">MOEZ</span>
+              <span className="font-pixel text-[9px] text-white/45">{moezTime}</span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold text-black dark:text-white truncate">
-              <MapPin className="w-3 h-3 text-[#118AB2] shrink-0" />
+            <div className="flex items-center gap-1 text-[11px] font-medium text-white/75 truncate mt-3">
+              <MapPin className="w-3.5 h-3.5 text-[#62aaff] shrink-0" />
               <span className="truncate">
-                {currentUser === 'Moez' ? myCity : (partnerName === 'Moez' ? partnerCity : 'Tunisia')}
+                <span className="script-place">{currentUser === 'Moez' ? myCity : (partnerName === 'Moez' ? partnerCity : 'Tunisia')}</span>
               </span>
             </div>
           </div>
 
           {/* Player 2 (Eliza) */}
-          <div className="border border-black bg-[#FAF8F5] dark:bg-[#121224] p-2">
+          <div className="location-card location-card-pink p-3">
             <div className="flex items-center justify-between pb-1 border-b border-black/10 dark:border-white/10 mb-1">
-              <span className="font-pixel text-[10px] text-[#FF3366]">ELIZA</span>
-              <span className="font-pixel text-[9px] text-[#777]">{elizaTime}</span>
+              <span className="font-pixel text-[10px] text-[#ff6d9f]">ELIZA</span>
+              <span className="font-pixel text-[9px] text-white/45">{elizaTime}</span>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold text-black dark:text-white truncate">
-              <MapPin className="w-3 h-3 text-[#FF3366] shrink-0" />
+            <div className="flex items-center gap-1 text-[11px] font-medium text-white/75 truncate mt-3">
+              <MapPin className="w-3.5 h-3.5 text-[#ff6d9f] shrink-0" />
               <span className="truncate">
-                {currentUser === 'Eliza' ? myCity : (partnerName === 'Eliza' ? partnerCity : 'Poland')}
+                <span className="script-place">{currentUser === 'Eliza' ? myCity : (partnerName === 'Eliza' ? partnerCity : 'Poland')}</span>
               </span>
             </div>
           </div>
@@ -167,38 +167,38 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* PARTNER RPG STATUS CARD */}
-      <div className="pixel-card bg-white dark:bg-[#1A1A2E] p-3.5 relative">
-        <div className="flex items-center justify-between pb-2 border-b-2 border-black mb-3">
+      <div className="pixel-card status-card p-4 relative">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <span className="font-pixel text-[9px] text-[#FF3366] uppercase tracking-wider block">
-              &gt; PARTNER STATUS &lt;
+            <span className="font-pixel text-[10px] text-[#ff6d9f] uppercase tracking-[0.16em] block">
+              ♥ PARTNER STATUS
             </span>
-            <h2 className="font-pixel text-base text-black dark:text-white mt-0.5">
+            <h2 className="font-pixel text-lg text-white mt-1 tracking-[0.12em]">
               PARTNER: {partnerName.toUpperCase()}
             </h2>
           </div>
 
           {/* Partner HP Bar */}
           <div className="text-right">
-            <div className="font-pixel text-[9px] text-black dark:text-[#AAA]">LOVE: 100%</div>
-            <div className="flex gap-0.5 text-xs text-[#FF3366]">
+            <div className="font-pixel text-[9px] text-white/55">LOVE: 100%</div>
+            <div className="flex gap-0.5 text-sm text-[#ff4d91] mt-1">
               ♥♥♥♥♥
             </div>
           </div>
         </div>
 
         {/* Current status banner */}
-        <div className="p-3 border-2 border-black bg-[#FAF8F5] dark:bg-[#121224] shadow-[2px_2px_0px_#000] flex items-center justify-between">
+        <div className="status-inner p-4 flex items-center justify-between">
           <div>
-            <span className="font-pixel text-[9px] text-[#777] dark:text-[#AAA] uppercase block">
+            <span className="font-pixel text-[9px] text-white/45 uppercase block tracking-[0.14em]">
               CURRENT STATUS:
             </span>
-            <span className="font-pixel text-xs text-black dark:text-white">
+            <span className="font-pixel text-sm text-white mt-1 block">
               {partnerStatus?.status || 'FEELING LOVED'}
             </span>
           </div>
 
-          <span className="font-pixel text-[9px] bg-black text-[#06D6A0] px-1.5 py-0.5 border border-black">
+          <span className="time-chip font-pixel text-[11px] text-[#42dfcf] px-3 py-2">
             {partnerStatus?.updated_at
               ? new Date(partnerStatus.updated_at).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -210,9 +210,9 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* INSTANT CONNECTION: ONE-TAP LOVE & ACTIONS */}
-      <div className="pixel-card bg-white dark:bg-[#1A1A2E] p-3.5 text-center">
-        <div className="font-pixel text-xs text-black dark:text-white mb-2 uppercase tracking-wider">
-          ★ SEND A LITTLE LOVE ★
+      <div className="pixel-card love-card p-4 text-center">
+        <div className="font-pixel text-xs text-white/80 mb-3 uppercase tracking-[0.16em]">
+          SEND A LITTLE LOVE
         </div>
 
         {/* Large Thinking of you button */}
@@ -222,7 +222,7 @@ export const HomeView: React.FC = () => {
             pixelAudio.playHeart();
             sendLoveAction('thinking');
           }}
-          className="w-full py-3 px-4 bg-[#FF3366] hover:bg-[#ff1a53] text-white border-2 border-black shadow-[3px_3px_0px_#000] font-pixel text-xs flex items-center justify-center gap-2 cursor-pointer mb-2"
+          className="love-primary w-full py-4 px-4 text-white font-pixel text-xs flex items-center justify-center gap-2 cursor-pointer mb-3"
         >
           <Heart className="w-4 h-4 fill-white" />
           <span>
@@ -238,7 +238,7 @@ export const HomeView: React.FC = () => {
             pixelAudio.playBlip();
             setShowLoveActions(true);
           }}
-          className="w-full py-2 bg-[#FAF8F5] dark:bg-[#121224] text-black dark:text-white border-2 border-black font-pixel text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-0.5 cursor-pointer flex items-center justify-center gap-1.5"
+          className="love-secondary w-full py-3 px-3 text-white/75 font-pixel text-[10px] cursor-pointer flex items-center justify-center gap-1.5"
         >
           <Sparkles className="w-3 h-3 text-[#FF3366]" />
           <span>OPEN LOVE ACTIONS (KISS, HUG, GOOD MORNING...)</span>
@@ -246,9 +246,9 @@ export const HomeView: React.FC = () => {
       </div>
 
       {/* SIGNATURE VIRTUAL HUG CARD */}
-      <div className="pixel-card bg-white dark:bg-[#1A1A2E] p-4 text-center">
-        <div className="font-pixel text-xs text-black dark:text-white mb-3 uppercase tracking-wider">
-          &gt; SEND A VIRTUAL HUG &lt;
+      <div className="pixel-card hug-section p-4 text-center">
+        <div className="font-pixel text-xs text-white/80 mb-3 uppercase tracking-[0.16em]">
+          SEND A VIRTUAL HUG
         </div>
 
         <VirtualHugButton
